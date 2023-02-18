@@ -2,34 +2,20 @@
 const fs = require("fs");
 const path = require("path");
 const express = require("express");
+const { accounts, users, writeJSON } = require("./data");
 
 // Create an Express app
 const app = express();
 
-// Use the 'fs' and 'path' modules here...
-
 // Set the views directory to the 'views' folder in the current directory
 app.set("views", path.join(__dirname, "views"));
-
+// Set the view engine to EJS
+app.set("view engine", "ejs");
 // Serve static files from the 'public' directory
 app.use(express.static(path.join(__dirname, "public")));
 
 // Add the middleware to handle POST data
 app.use(express.urlencoded({ extended: true }));
-
-// Set the view engine to EJS
-app.set("view engine", "ejs");
-const accountData = fs.readFileSync(
-  path.join(__dirname, "json/accounts.json"),
-  "utf8"
-);
-const accounts = JSON.parse(accountData);
-
-const userData = fs.readFileSync(
-  path.join(__dirname, "json/users.json"),
-  "utf8"
-);
-const users = JSON.parse(userData);
 
 app.get("/", (req, res) => {
   res.render("index", { title: "Account Summary", accounts: accounts });
@@ -59,14 +45,7 @@ app.post("/transfer", function (req, res) {
 
   accounts[from].balance -= amount;
   accounts[to].balance += amount;
-
-  const accountsJSON = JSON.stringify(accounts);
-
-  fs.writeFileSync(
-    path.join(__dirname, "json", "accounts.json"),
-    accountsJSON,
-    "utf8"
-  );
+  writeJSON();
 
   res.render("transfer", { message: "Transfer Completed" });
 });
@@ -80,15 +59,7 @@ app.get("/payment", (req, res) => {
 app.post("/payment", (req, res) => {
   accounts.credit.balance -= parseInt(req.body.amount);
   accounts.credit.available += parseInt(req.body.amount);
-
-  // Save updated accounts to JSON file
-  const accountsJSON = JSON.stringify(accounts, null, 4);
-  fs.writeFileSync(
-    path.join(__dirname, "/json/accounts.json"),
-    accountsJSON,
-    "utf8"
-  );
-
+  writeJSON();
   res.render("payment", {
     message: "Payment Successful",
     account: accounts.credit,
